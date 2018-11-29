@@ -1,0 +1,50 @@
+
+
+Consulta dsLogin  usuarios
+SELECT Id, usuario, password FROM usuarios
+WHERE (usuario = @usuario) AND (password = @password)
+
+Consulta  dsDatos  datos
+SELECT codigo, nombre, apellido, promedioMontos, pais
+FROM   datos
+WHERE (nombre LIKE + @valor + '%')
+
+//SP mostrar datos
+create procedure mostrar_datos @valor varchar(40)
+as
+SELECT codigo, nombre, apellido, promedioMontos, pais
+FROM   datos
+WHERE (nombre LIKE + @valor + '%');
+
+exec mostrar_datos @valor
+
+Tabla usuarios
+create table usuarios
+(
+Id int primary key identity, 
+usuario varchar(40),
+password varchar(40)
+);
+
+Tabla datos
+
+create table datos
+(
+codigo varchar(40) primary key,
+nombre varchar(40),
+apellido varchar(40),
+promedioMontos numeric(7,2),
+pais varchar(40)
+);
+
+
+//SP Modificar declarando variables
+create procedure modifi_usuario
+@id int
+as
+declare @nombres varchar(40);
+set @nombres = 'eliassss';
+update usuarios set usuario = @nombres where Id = @id;
+
+exec modifi_usuario @id;
+

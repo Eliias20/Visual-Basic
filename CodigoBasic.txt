@@ -1,0 +1,183 @@
+Loggin de app windows forms
+
+dataset fisico dsLogin
+CommandText la consulta sql
+FillBy,GetDataAccesoUsuario
+
+Loggin
+SELECT Id, usuario, password FROM usuarios
+WHERE (usuario = @usuario) AND (password = @password)
+
+dsDatos
+SELECT codigo, nombre, apellido, promedioMontos, pais
+FROM   datos
+WHERE (nombre LIKE + @valor + '%')
+
+Tabla usuarios
+create table usuarios
+(
+Id int primary key identity, 
+usuario varchar(40),
+password varchar(40)
+);
+
+Tabla datos
+
+create table datos
+(
+codigo varchar(40) primary key,
+nombre varchar(40),
+apellido varchar(40),
+promedioMontos numeric(7,2),
+pais varchar(40)
+);
+
+Codigo del Loggin
+
+
+    Private dtUsuarios As New dsusuarios.usuariosDataTable
+    Private taUsuarios As New dsusuariosTableAdapters.usuariosTableAdapter
+
+    Private Sub Label1_Click(sender As Object, e As EventArgs) Handles Label1.Click
+
+    End Sub
+
+    Private Sub btnlogin_Click(sender As Object, e As EventArgs) Handles btnlogin.Click
+        dtUsuarios = taUsuarios.GetDataAccesoUsuario(txtUsuario.Text, txtPassword.Text)
+        If dtUsuarios.Count > 0 Then ' si la dataTable contiene un registro...
+            MsgBox("Bienvenido!!")
+            'oculto el formulario actual..
+            Me.Hide()
+            'cargamos el formulario principal...
+            Form2.Show()
+        Else
+            MsgBox("No está autorizado!!")
+        End If
+    End Sub
+End Class
+
+
+
+
+
+Codigo del mantenimiento
+Public Class Form2
+    'instanciamos dataTable..
+    Private dtGrandesClientes As New dsDatos.datosDataTable
+    'levantamos instancia del tableAdapter...
+    Private taGrandesClientes As New dsDatosTableAdapters.datosTableAdapter
+    'levantamos instancia de una fila del tableAdapter...
+    Private registro As dsDatos.datosRow
+
+    'es para efectos de la lógica del aplicativo...
+    Private campoLlave As String
+    Private editar As Boolean = False
+    Private numeroRegistro As String
+
+
+    Private Sub txtApellido_TextChanged(sender As Object, e As EventArgs) Handles txtApellido.TextChanged
+
+    End Sub
+
+    Private Sub GuardarToolStripMenuItem_Click(sender As Object, e As EventArgs) Handles GuardarToolStripMenuItem.Click
+        If (Me.editar) Then
+            registro = dtGrandesClientes.FindBycodigo(Me.campoLlave)
+            registro.nombre = txtNombre.Text
+            registro.apellido = txtApellido.Text
+            registro.promedioMontos = TxtPromedioMontos.Text
+            registro.pais = txtPaisOrigen.Text
+            'actualizamos la base de datos original...
+            Try
+                taGrandesClientes.Update(dtGrandesClientes)
+                MsgBox("actualización éxitosa")
+            Catch ex As Exception
+                MsgBox("actualización fállida...")
+            End Try
+            Me.editar = False
+            Me.limpiarCajasTexto()
+
+        Else
+
+            'codigo para insertar un nuevo registro
+            Me.registro = dtGrandesClientes.NewdatosRow()
+            Me.registro.codigo = txtCodigo.Text
+            Me.registro.nombre = txtNombre.Text
+            Me.registro.apellido = txtApellido.Text
+            Me.registro.promedioMontos = TxtPromedioMontos.Text
+            Me.registro.pais = txtPaisOrigen.Text
+
+
+            'agregar registro al dataTable
+            dtGrandesClientes.AdddatosRow(Me.registro)
+            'actualizamos la base de datos...
+            Try
+                taGrandesClientes.Update(dtGrandesClientes)
+                MsgBox("Registro insertado éxitosamente")
+            Catch ex As Exception
+                MsgBox("Error al insertar un registro...")
+            End Try
+            Me.limpiarCajasTexto()
+        End If
+    End Sub
+
+    Private Sub Form2_Load(sender As Object, e As EventArgs) Handles MyBase.Load
+        Me.dtGrandesClientes = Me.taGrandesClientes.GetData()
+        dgGrandesClientes.DataSource = Me.dtGrandesClientes
+    End Sub
+
+    Private Sub JToolStripMenuItem_Click(sender As Object, e As EventArgs) Handles JToolStripMenuItem.Click
+        Me.registro = dtGrandesClientes.Rows(Me.numeroRegistro)
+        registro.Delete()
+        Try
+            taGrandesClientes.Update(dtGrandesClientes)
+            MsgBox("registro borrado éxitosamente ")
+        Catch ex As Exception
+            MsgBox("No se pudo eliminar el registro")
+        End Try
+    End Sub
+
+    Private Sub SToolStripMenuItem_Click(sender As Object, e As EventArgs) Handles SToolStripMenuItem.Click
+        Me.editar = True
+        cargarDatosEnCajasTexto()
+    End Sub
+
+    Private Sub cargarDatosEnCajasTexto()
+        Me.campoLlave = dgGrandesClientes.CurrentRow.Cells.Item(0).Value.ToString()
+        txtNombre.Text = dgGrandesClientes.CurrentRow.Cells.Item(1).Value.ToString()
+        txtApellido.Text = dgGrandesClientes.CurrentRow.Cells.Item(2).Value.ToString()
+        TxtPromedioMontos.Text = dgGrandesClientes.CurrentRow.Cells.Item(3).Value.ToString()
+        txtPaisOrigen.Text = dgGrandesClientes.CurrentRow.Cells.Item(4).Value.ToString()
+    End Sub
+
+    Private Sub limpiarCajasTexto()
+        txtCodigo.Text = ""
+        txtNombre.Text = ""
+        txtApellido.Text = ""
+        TxtPromedioMontos.Text = ""
+        txtPaisOrigen.Text = ""
+    End Sub
+
+
+
+    Private Sub btnVerTodos_Click(sender As Object, e As EventArgs) Handles btnVerTodos.Click
+        Me.dtGrandesClientes = Me.taGrandesClientes.GetData()
+        dgGrandesClientes.DataSource = Me.dtGrandesClientes
+    End Sub
+
+    Private Sub txtBuscarCliente_KeyPress(sender As Object, e As KeyPressEventArgs) Handles txtBuscarCliente.KeyPress
+        'primero lleno mi dataTable...
+        dtGrandesClientes = taGrandesClientes.GetDataByNombre(txtBuscarCliente.Text)
+        'asignar al dataGrid el dataTable lleno...
+        dgGrandesClientes.DataSource = dtGrandesClientes
+    End Sub
+
+    Private Sub dgGrandesClientes_SelectionChanged(sender As Object, e As EventArgs) Handles txtBuscarCliente.TextChanged
+        Try
+            lblNumeroRegistro.Text = dgGrandesClientes.CurrentRow.Index.ToString()
+            Me.numeroRegistro = dgGrandesClientes.CurrentRow.Index.ToString()
+        Catch ex As Exception
+            MsgBox("No se encuentran registros")
+        End Try
+
+    End Sub
+End Class
